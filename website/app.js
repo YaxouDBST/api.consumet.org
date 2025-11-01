@@ -9,8 +9,7 @@ let currentMangaData=null;
 let currentChapterIndex=0;
 let allChapters=[];
 let currentChapterNumber=null;
-let currentTab='home';
-let searchFilter='both';
+let currentTab='manga';
 
 document.addEventListener('DOMContentLoaded',()=>{
 loadAllTrending();
@@ -20,25 +19,8 @@ loadAllLatest();
 function showLoading(){loadingSpinner.classList.remove('hidden');}
 function hideLoading(){loadingSpinner.classList.add('hidden');}
 function switchTab(tab){
-currentTab=tab;
-console.log('Switching to tab:', tab);
-// Update active nav link styling
-let tabMap={'home':'tabHome','manga':'tabManga','anime':'tabAnime'};
-let navLinks=document.querySelectorAll('.nav-link');
-console.log('Found nav links:', navLinks.length);
-navLinks.forEach(link=>{
-  link.classList.remove('active');
-  link.style.color='var(--text-secondary)';
-  link.style.borderBottom='none';
-});
-let activeTab=document.getElementById(tabMap[tab]);
-console.log('Active tab element:', activeTab);
-if(activeTab){
-  activeTab.classList.add('active');
-  activeTab.style.color='var(--primary-color)';
-  activeTab.style.borderBottom='2px solid var(--primary-color)';
-  console.log('Added active styles to:', activeTab.id);
-}
+currentTab='manga';
+console.log('Switching to tab: manga');
 loadAllTrending();
 loadAllLatest();
 }
@@ -47,16 +29,14 @@ async function loadAllTrending(){
 try{
 showLoading();
 trendingContainer.innerHTML='';
-let eps=[];
-console.log('Loading trending for tab:', currentTab);
-if(currentTab==='home'){
-eps=[{url:API_BASE+'/manga/mangadex/trending',type:'manga'},{url:API_BASE+'/anime/zoro/most-popular',type:'anime'},{url:API_BASE+'/anime/zoro/latest-completed',type:'anime'}];
-}else if(currentTab==='anime'){
-console.log('Loading anime providers');
-eps=[{url:API_BASE+'/anime/zoro/most-popular',type:'anime'},{url:API_BASE+'/anime/zoro/latest-completed',type:'anime'},{url:API_BASE+'/anime/animepahe/recent-episodes',type:'anime'}];
-}else if(currentTab==='manga'){
-eps=[{url:API_BASE+'/manga/mangadex/trending',type:'manga'},{url:API_BASE+'/manga/mangakakalot/trending',type:'manga'},{url:API_BASE+'/manga/mangapark/trending',type:'manga'},{url:API_BASE+'/manga/managreader/trending',type:'manga'},{url:API_BASE+'/manga/mangapill/trending',type:'manga'},{url:API_BASE+'/manga/mangasee123/trending',type:'manga'}];
-}
+let eps=[
+{url:API_BASE+'/manga/mangadex/trending',type:'manga'},
+{url:API_BASE+'/manga/mangakakalot/trending',type:'manga'},
+{url:API_BASE+'/manga/mangapark/trending',type:'manga'},
+{url:API_BASE+'/manga/managreader/trending',type:'manga'},
+{url:API_BASE+'/manga/mangapill/trending',type:'manga'},
+{url:API_BASE+'/manga/mangasee123/trending',type:'manga'}
+];
 console.log('Endpoints to fetch:', eps);
 let all=[];
 for(let e of eps){
@@ -78,14 +58,14 @@ async function loadAllLatest(){
 try{
 showLoading();
 latestContainer.innerHTML='';
-let eps=[];
-if(currentTab==='home'){
-eps=[{url:API_BASE+'/manga/mangadex/recent',type:'manga'},{url:API_BASE+'/anime/zoro/most-popular',type:'anime'},{url:API_BASE+'/anime/animepahe/recent-episodes',type:'anime'}];
-}else if(currentTab==='anime'){
-eps=[{url:API_BASE+'/anime/zoro/most-popular',type:'anime'},{url:API_BASE+'/anime/zoro/latest-completed',type:'anime'},{url:API_BASE+'/anime/animepahe/recent-episodes',type:'anime'}];
-}else if(currentTab==='manga'){
-eps=[{url:API_BASE+'/manga/mangadex/recent',type:'manga'},{url:API_BASE+'/manga/mangakakalot/recent',type:'manga'},{url:API_BASE+'/manga/mangapark/recent',type:'manga'},{url:API_BASE+'/manga/managreader/recent',type:'manga'},{url:API_BASE+'/manga/mangapill/recent',type:'manga'},{url:API_BASE+'/manga/mangasee123/recent',type:'manga'}];
-}
+let eps=[
+{url:API_BASE+'/manga/mangadex/recent',type:'manga'},
+{url:API_BASE+'/manga/mangakakalot/recent',type:'manga'},
+{url:API_BASE+'/manga/mangapark/recent',type:'manga'},
+{url:API_BASE+'/manga/managreader/recent',type:'manga'},
+{url:API_BASE+'/manga/mangapill/recent',type:'manga'},
+{url:API_BASE+'/manga/mangasee123/recent',type:'manga'}
+];
 let all=[];
 for(let e of eps){
 try{
@@ -137,19 +117,8 @@ showLoading();
 let endpoint='';
 console.log('Loading details - ID:', id, 'Type:', type, 'Provider:', provider);
 
-// For now, skip detailed fetch for anime as providers return empty data
-// Just return null to use fallback card data which is usually sufficient
-if(type==='anime'){
-console.log('Skipping anime detail fetch - using card data');
-hideLoading();
-return null;
-}
-
 let providers=[];
-if(type!=='anime'){
-// Try multiple manga providers if one fails
 providers=[provider||'mangadex', 'mangakakalot', 'mangapark', 'managreader', 'mangapill'];
-}
 
 let response=null;
 let data=null;
@@ -157,7 +126,7 @@ let failedProviders=[];
 
 for(let p of providers){
 try{
-let testEndpoint=API_BASE+(type==='anime'?'/anime/':'/manga/')+p+'/info/'+encodeURIComponent(id);
+let testEndpoint=API_BASE+'/manga/'+p+'/info/'+encodeURIComponent(id);
 console.log('Trying provider:', p, 'Endpoint:', testEndpoint);
 let testResponse=await fetch(testEndpoint);
 console.log('Response status:', testResponse.status);
@@ -166,9 +135,9 @@ let testData=await testResponse.json();
 console.log('Provider '+p+' response:', testData);
 // Check if response has meaningful data (title and at least some content)
 let hasTitle=testData.title&&testData.title.trim()!=='';
-let hasEpisodes=testData.episodes&&(Array.isArray(testData.episodes)?testData.episodes.length>0:testData.episodes>0);
+let hasChapters=testData.chapters&&(Array.isArray(testData.chapters)?testData.chapters.length>0:testData.chapters>0);
 let hasDesc=testData.description&&testData.description.trim()!=='';
-if(hasTitle||(hasEpisodes||hasDesc)){
+if(hasTitle||(hasChapters||hasDesc)){
 // Valid response - use it
 response=testResponse;
 provider=p;
@@ -195,15 +164,14 @@ return null;
 }
 
 console.log('Details loaded:', data);
-data._type=type;
+data._type='manga';
 data._provider=provider;
-// Extract chapters/episodes - ensure it's an array
+// Extract chapters - ensure it's an array
 allChapters=[];
 if(Array.isArray(data.chapters)){allChapters=data.chapters;}
-else if(Array.isArray(data.episodes)){allChapters=data.episodes;}
 else if(Array.isArray(data.content)){allChapters=data.content;}
 else if(Array.isArray(data.data)){allChapters=data.data;}
-console.log('Chapters/Episodes found:', allChapters.length);
+console.log('Chapters found:', allChapters.length);
 hideLoading();
 return data;
 }catch(error){
@@ -218,7 +186,7 @@ let detailContent=document.getElementById('detailContent');
 console.log('Raw API data:', data);
 console.log('Data keys:', Object.keys(data));
 // Try multiple field names for each property
-let title=data.title||data.name||data.jname||data.malTitle||'Unknown';
+let title=data.title||data.name||'Unknown';
 let image=data.image||data.cover||data.poster||'https://via.placeholder.com/200x280';
 // Handle description - could be string or object with language keys
 let desc='No description available';
@@ -231,45 +199,26 @@ desc=data.description.en||data.description.en||Object.values(data.description)[0
 desc=data.synopsis;
 }else if(data.plot&&data.plot.trim()!==''){
 desc=data.plot;
-}else if(data.japaneseTitle){
-desc='Japanese Title: '+data.japaneseTitle;
 }
 let genres=data.genres||data.type||[];
-let status=data.status||data.airing||'Unknown';
-// Extract episodes/chapters - try multiple field names, filter out non-arrays
-let episodes=[];
-if(Array.isArray(data.episodes)){episodes=data.episodes;}
-else if(Array.isArray(data.chapters)){episodes=data.chapters;}
-else if(Array.isArray(data.content)){episodes=data.content;}
-else if(Array.isArray(data.data)){episodes=data.data;}
-else if(typeof data.episodes==='number'&&data.episodes>0){
-// If episodes is a count, generate dummy episode objects with potential ID formats
-console.log('Episodes is a count, generating dummy episodes array');
-let animeId=data.id||'unknown';
-for(let i=1;i<=data.episodes;i++){
-// Try multiple ID formats that providers might accept
-episodes.push({
-title:'Episode '+i,
-episode:i,
-number:i,
-id:animeId+'-episode-'+i,  // Try this format first
-url:animeId+'?ep='+i       // Alternative format
-});
-}
-}
-if(data.episodes&&typeof data.episodes==='number'){console.log('Episodes count:', data.episodes);}
+let status=data.status||'Unknown';
+// Extract chapters - try multiple field names, filter out non-arrays
+let chapters=[];
+if(Array.isArray(data.chapters)){chapters=data.chapters;}
+else if(Array.isArray(data.content)){chapters=data.content;}
+else if(Array.isArray(data.data)){chapters=data.data;}
+if(data.chapters&&typeof data.chapters==='number'){console.log('Chapters count:', data.chapters);}
 console.log('Extracted - Title:', title, 'Image:', image, 'Description:', desc);
-console.log('Episodes data:', episodes, 'Length:', episodes.length);
-let episodeLabel=data._type==='anime'?'Episodes':'Chapters';
+console.log('Chapters data:', chapters, 'Length:', chapters.length);
 let html='<div class=\"detail-header\"><div class=\"detail-cover\"><img src=\"'+image+'\" alt=\"'+title+'\" onerror=\"this.src=\\\"https://via.placeholder.com/200x280\\\"\"></div><div class=\"detail-info\"><h2>'+title+'</h2><div class=\"detail-meta\"><div class=\"meta-item\"><span>Status:</span><span class=\"meta-value\">'+status+'</span></div></div><div class=\"detail-description\">'+desc+'</div></div></div>';
-if(episodes.length>0){
-  html+='<div class=\"chapters-list\"><h3>'+episodeLabel+' ('+episodes.length+' total)</h3><div style=\"max-height:400px;overflow-y:auto;\">';
-  for(let i=0;i<episodes.length;i++){
-    let ep=episodes[i];
-    let epId=ep.id||ep.url||ep.link||i; // Fallback to index if no id
-    let epTitle=ep.title||ep.name||ep.chapter||'Episode '+(i+1);
-    console.log('Episode '+i+':', {id: epId, title: epTitle});
-    html+='<div class=\"chapter-item\" onclick=\"readChapter(\''+String(epId).replace(/'/g,"\\'")+'\', \''+data.id.replace(/'/g,"\\'")+'\', \''+data._type+'\', '+i+', \''+data._provider+'\')\"><div class=\"chapter-title\">'+episodeLabel+' '+epTitle+'</div></div>';
+if(chapters.length>0){
+  html+='<div class=\"chapters-list\"><h3>Chapters ('+chapters.length+' total)</h3><div style=\"max-height:400px;overflow-y:auto;\">';
+  for(let i=0;i<chapters.length;i++){
+    let ch=chapters[i];
+    let chId=ch.id||ch.url||ch.link||i; // Fallback to index if no id
+    let chTitle=ch.title||ch.name||ch.chapter||'Chapter '+(i+1);
+    console.log('Chapter '+i+':', {id: chId, title: chTitle});
+    html+='<div class=\"chapter-item\" onclick=\"readChapter(\''+String(chId).replace(/'/g,"\\'")+'\', \''+data.id.replace(/'/g,"\\'")+'\', \'manga\', '+i+', \''+data._provider+'\')\"><div class=\"chapter-title\">Chapter '+chTitle+'</div></div>';
   }
   html+='</div></div>';
 }
@@ -279,7 +228,7 @@ detailModal.classList.remove('hidden');
 
 function closeDetailModal(){detailModal.classList.add('hidden');}
 async function readChapter(chapterId,mangaId,type,index,provider){
-currentMangaData={id:mangaId,type:type,mangaType:type,_provider:provider||'zoro'};
+currentMangaData={id:mangaId,type:'manga',mangaType:'manga',_provider:provider||'mangadex'};
 currentChapterIndex=index||0;
 if(allChapters[currentChapterIndex]){
 currentChapterNumber=allChapters[currentChapterIndex].title||allChapters[currentChapterIndex].name||allChapters[currentChapterIndex].chapter||(currentChapterIndex+1);
@@ -295,14 +244,8 @@ async function loadAndDisplayChapter(chapterId){
 try{
 showLoading();
 let endpoint;
-let provider=currentMangaData._provider||'zoro';
-if(currentMangaData.type==='anime'){
-endpoint=API_BASE+'/anime/'+provider+'/watch/'+encodeURIComponent(chapterId);
-console.log('Anime provider:', provider);
-}else{
-provider=provider||'mangadex';
+let provider=currentMangaData._provider||'mangadex';
 endpoint=API_BASE+'/manga/'+provider+'/read/'+encodeURIComponent(chapterId);
-}
 console.log('Fetching from endpoint:', endpoint);
 console.log('Current manga data:', currentMangaData);
 let response=await fetch(endpoint);
@@ -315,9 +258,9 @@ console.error('API Error:', errorData);
 throw new Error('API returned status '+response.status+'. Provider: '+provider+'. This might be a provider API issue. Try again later.');
 }
 let data=await response.json();
-console.log('Raw chapter/episode data:', data);
+console.log('Raw chapter data:', data);
 let pages=[];
-// Try different property names for pages/sources
+// Try different property names for pages
 if(Array.isArray(data)){
   pages=data;
   console.log('Response is direct array, length:', pages.length);
@@ -325,23 +268,21 @@ if(Array.isArray(data)){
   pages=data.pages;
 }else if(data.sources){
   pages=data.sources;
-}else if(data.episodes){
-  pages=data.episodes;
 }else{
   pages=[];
 }
-console.log('Pages/Sources extracted:', pages.length, 'items');
+console.log('Pages extracted:', pages.length, 'items');
 // Filter to only get valid items - string URLs or objects with image/url properties
 pages=pages.filter(p=>{
   if(typeof p==='string'&&p.length>0&&p.startsWith('http')) return true;
   if(typeof p==='object'&&(p.img||p.image||p.url||p.link)) return true;
   return false;
 });
-console.log('Pages/Sources after filtering:', pages.length, 'items');
+console.log('Pages after filtering:', pages.length, 'items');
 if(pages.length===0){
 console.warn('No pages found - provider may not have this chapter cached');
 console.log('Response was:', data);
-alert('No pages/sources found for this chapter/episode. This provider may not have the content cached or available right now. Try another provider or check back later.');
+alert('No pages found for this chapter. This provider may not have the content cached or available right now. Try another provider or check back later.');
 hideLoading();
 return;
 }
@@ -359,30 +300,8 @@ let mainContent=document.querySelector('.main-content');
 let originalHTML=mainContent.innerHTML;
 mainContent.innerHTML='';
 let html='<div style="background:var(--bg-dark);min-height:100vh;padding:20px 0;">';
-let contentType=currentMangaData.mangaType==='anime'?'Episode':'Chapter';
-html+='<div class="container"><button onclick="backToHome()" style="background:var(--primary-color);color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;margin-bottom:20px;font-weight:600;">← Back to '+currentMangaData.mangaType+'</button></div>';
+html+='<div class="container"><button onclick="backToHome()" style="background:var(--primary-color);color:white;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;margin-bottom:20px;font-weight:600;">← Back to Manga</button></div>';
 html+='<div class="container">';
-if(currentMangaData.type==='anime'){
-html+='<div style="margin-bottom:30px;background:var(--bg-card);border-radius:8px;overflow:hidden;border:1px solid var(--border-color);">';
-if(Array.isArray(pages)&&pages.length>0){
-let firstSource=pages[0];
-console.log('First source:', firstSource, 'Type:', typeof firstSource);
-// Check if it's a URL (string)
-if(typeof firstSource==='string'&&firstSource.startsWith('http')){
-html+='<video width="100%" height="600" controls style="width:100%;height:600px;background:#000;"><source src="'+firstSource+'" type="video/mp4">Your browser does not support the video tag.</video>';
-html+='<div style="padding:20px;"><p style="color:var(--text-secondary);">Video Episode - If video doesn\'t load, the provider may be down</p></div>';
-}else if(typeof firstSource==='object'&&firstSource.url){
-let videoUrl=firstSource.url;
-html+='<video width="100%" height="600" controls style="width:100%;height:600px;background:#000;"><source src="'+videoUrl+'" type="video/mp4">Your browser does not support the video tag.</video>';
-html+='<div style="padding:20px;"><p style="color:var(--text-secondary);">Quality: '+firstSource.quality||'Auto'+'</p></div>';
-}else{
-html+='<div style="padding:40px;text-align:center;"><p style="color:var(--text-secondary);">Episode data format not recognized. Provider may not support this episode.</p></div>';
-}
-}else{
-html+='<div style="padding:40px;text-align:center;"><p style="color:var(--text-secondary);">No video sources available for this episode</p></div>';
-}
-html+='</div>';
-}else{
 html+='<div style="display:grid;gap:15px;grid-template-columns:repeat(auto-fit,minmax(100%,1fr));">';
 if(Array.isArray(pages)){
 pages.forEach((p,i)=>{
@@ -398,17 +317,16 @@ if(img){html+='<div style="border:1px solid var(--border-color);border-radius:8p
 html+='<p style="color:var(--text-secondary);">No pages found</p>';
 }
 html+='</div>';
-}
 html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-top:40px;padding:20px;background:var(--bg-card);border-radius:8px;gap:20px;">';
 // Check if this is the last chapter
 let isLastChapter=currentChapterIndex>=allChapters.length-1;
 // Previous/Home button - always show
-html+='<button onclick="previousChapter()" style="background:var(--primary-color);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:600;font-size:16px;">← Previous '+contentType+'</button>';
+html+='<button onclick="previousChapter()" style="background:var(--primary-color);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:600;font-size:16px;">← Previous Chapter</button>';
 // Chapter indicator
-html+='<span style="color:var(--text-secondary);">'+contentType+' '+currentChapterNumber+' ('+currentChapterIndex+'/'+(allChapters.length-1)+')</span>';
+html+='<span style="color:var(--text-secondary);">Chapter '+currentChapterNumber+' ('+currentChapterIndex+'/'+(allChapters.length-1)+')</span>';
 // Next button - only show if not last chapter
 if(!isLastChapter){
-html+='<button onclick="nextChapter()" style="background:var(--primary-color);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:600;font-size:16px;">Next '+contentType+' →</button>';
+html+='<button onclick="nextChapter()" style="background:var(--primary-color);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:600;font-size:16px;">Next Chapter →</button>';
 }else{
 html+='<button onclick="backToHome()" style="background:var(--primary-color);color:white;border:none;padding:12px 24px;border-radius:6px;cursor:pointer;font-weight:600;font-size:16px;">Back Home</button>';
 }
@@ -457,33 +375,13 @@ if(!query)return;
 try{
 showLoading();
 searchResultsContainer.innerHTML='';
-let eps=[];
-// If on French tab, search only French providers
-if(searchFilter==='both'){
-eps=[
+let eps=[
 {url:API_BASE+'/manga/mangadex/'+encodeURIComponent(query),type:'manga',provider:'mangadex'},
 {url:API_BASE+'/manga/mangakakalot/'+encodeURIComponent(query),type:'manga',provider:'mangakakalot'},
 {url:API_BASE+'/manga/managreader/'+encodeURIComponent(query),type:'manga',provider:'managreader'},
-{url:API_BASE+'/anime/zoro/'+encodeURIComponent(query),type:'anime',provider:'zoro'},
-{url:API_BASE+'/anime/animepahe/'+encodeURIComponent(query),type:'anime',provider:'animepahe'},
-{url:API_BASE+'/anime/anix/'+encodeURIComponent(query),type:'anime',provider:'anix'}
-];
-}else if(searchFilter==='anime'){
-eps=[
-{url:API_BASE+'/anime/zoro/'+encodeURIComponent(query),type:'anime',provider:'zoro'},
-{url:API_BASE+'/anime/animepahe/'+encodeURIComponent(query),type:'anime',provider:'animepahe'},
-{url:API_BASE+'/anime/anix/'+encodeURIComponent(query),type:'anime',provider:'anix'},
-{url:API_BASE+'/anime/9anime/'+encodeURIComponent(query),type:'anime',provider:'9anime'}
-];
-}else if(searchFilter==='manga'){
-eps=[
-{url:API_BASE+'/manga/mangadex/'+encodeURIComponent(query),type:'manga',provider:'mangadex'},
-{url:API_BASE+'/manga/mangakakalot/'+encodeURIComponent(query),type:'manga',provider:'mangakakalot'},
 {url:API_BASE+'/manga/mangapark/'+encodeURIComponent(query),type:'manga',provider:'mangapark'},
-{url:API_BASE+'/manga/managreader/'+encodeURIComponent(query),type:'manga',provider:'managreader'},
 {url:API_BASE+'/manga/mangapill/'+encodeURIComponent(query),type:'manga',provider:'mangapill'}
 ];
-}
 let all=[];
 for(let e of eps){
 try{
@@ -506,16 +404,6 @@ searchModal.classList.remove('hidden');
 }
 function closeSearchModal(){searchModal.classList.add('hidden');}
 function toggleMobileMenu(){document.querySelector('.nav-menu').classList.toggle('active');}
-
-function setSearchFilter(filter){
-searchFilter=filter;
-let buttons=['filterBoth','filterAnime','filterManga'];
-buttons.forEach(btn=>{
-let el=document.getElementById(btn);
-if(el){el.style.background=btn==='filter'+filter.charAt(0).toUpperCase()+filter.slice(1)||filter==='both'&&btn==='filterBoth'?'var(--primary-color)':'#333';}
-});
-performHeaderSearch();
-}
 
 document.getElementById('headerSearch')?.addEventListener('keypress',(e)=>{if(e.key==='Enter')performHeaderSearch();});
 searchModal?.addEventListener('click',(e)=>{if(e.target===searchModal)closeSearchModal();});

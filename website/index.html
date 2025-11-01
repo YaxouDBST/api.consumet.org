@@ -18,13 +18,12 @@
                 </div>
                 
                 <nav class="nav-menu">
-                    <a href="#" class="nav-link active" id="tabHome" onclick="switchTab('home')">Home</a>
-                    <a href="#" class="nav-link" id="tabManga" onclick="switchTab('manga')">Manga</a>
+                    <a href="#" class="nav-link active" id="tabHome" onclick="switchTab('manga')">Home</a>
                 </nav>
 
                 <div class="header-right">
                     <div class="search-box-header">
-                        <input type="text" id="headerSearch" placeholder="Search manga..." class="search-input-header">
+                        <input type="text" id="headerSearch" placeholder="Search..." class="search-input-header">
                         <button onclick="performHeaderSearch()" class="search-btn-header">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="11" cy="11" r="8"></circle>
@@ -75,11 +74,6 @@
         <div class="modal-content">
             <button class="modal-close" onclick="closeSearchModal()">×</button>
             <h2>Search Results</h2>
-            <div id="searchFilterButtons" style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-                <button onclick="setSearchFilter('both')" id="filterBoth" style="padding:8px 16px;background:var(--primary-color);color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Both</button>
-                <button onclick="setSearchFilter('anime')" id="filterAnime" style="padding:8px 16px;background:#333;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Anime Only</button>
-                <button onclick="setSearchFilter('manga')" id="filterManga" style="padding:8px 16px;background:#333;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">Manga Only</button>
-            </div>
             <div id="searchResultsContainer" class="manga-grid">
                 <!-- Search results loaded here -->
             </div>
